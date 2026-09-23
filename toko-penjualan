@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toko Keuangan</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#fff; --primary:#2563eb; --green:#16a34a; --red:#dc2626;
+    --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:var(--primary);color:#fff;padding:18px 20px;}
+  header h1{margin:0;font-size:20px;}
+  nav{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;}
+  nav button{flex:1;padding:14px;border:none;background:none;font-size:14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;}
+  nav button.active{color:var(--primary);border-color:var(--primary);font-weight:600;}
+  main{max-width:700px;margin:0 auto;padding:16px;}
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
+  .card{background:var(--card);border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .card .label{font-size:12px;color:var(--muted);}
+  .card .value{font-size:18px;font-weight:700;margin-top:4px;}
+  .card.saldo{grid-column:1/-1;}
+  .green{color:var(--green);} .red{color:var(--red);}
+  form{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;}
+  form h3{margin:0 0 12px;}
+  .row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:120px;}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+  input{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;}
+  button.submit{background:var(--primary);color:#fff;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:14px;}
+  .total-preview{font-size:13px;color:var(--muted);margin-top:6px;}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  th,td{padding:10px;text-align:left;font-size:13px;border-bottom:1px solid var(--border);}
+  th{background:#f9fafb;color:var(--muted);font-weight:600;}
+  .del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;}
+  .empty{text-align:center;color:var(--muted);padding:20px;}
+  .section-title{font-size:15px;font-weight:600;margin:20px 0 8px;}
+</style>
+</head>
+<body>
+<header><h1>🏪 Toko Keuangan</h1></header>
+<nav>
+  <button class="tab-btn active" data-tab="beranda">Beranda</button>
+  <button class="tab-btn" data-tab="pemasukan">Pemasukan</button>
+  <button class="tab-btn" data-tab="pengeluaran">Pengeluaran</button>
+</nav>
+<main>
+
+  <div id="beranda" class="tab">
+    <div class="cards">
+      <div class="card"><div class="label">Total Pemasukan</div><div class="value green" id="totalMasuk">Rp0</div></div>
+      <div class="card"><div class="label">Total Pengeluaran</div><div class="value red" id="totalKeluar">Rp0</div></div>
+      <div class="card saldo"><div class="label">Saldo / Keuntungan</div><div class="value" id="saldo">Rp0</div></div>
+    </div>
+    <div class="section-title">Transaksi Terbaru</div>
+    <table>
+      <thead><tr><th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Total</th></tr></thead>
+      <tbody id="recentList"></tbody>
+    </table>
+  </div>
+
+  <div id="pemasukan" class="tab" style="display:none">
+    <form id="formMasuk">
+      <h3>Tambah Pemasukan (Penjualan Barang)</h3>
+      <div class="row">
+        <div><label>Nama Barang</label><input type="text" id="mNama" required></div>
+        <div><label>Tanggal</label><input type="date" id="mTanggal" required></div>
+      </div>
+      <div class="row">
+        <div><label>Jumlah</label><input type="number" id="mJumlah" min="1" value="1" required></div>
+        <div><label>Harga Satuan (Rp)</label><input type="number" id="mHarga" min="0" required></div>
+      </div>
+      <div class="total-preview">Total: <b id="mTotalPreview">Rp0</b></div><br>
+      <button type="submit" class="submit">Simpan Pemasukan</button>
+    </form>
+    <table>
+      <thead><tr><th>Tanggal</th><th>Barang</th><th>Jml</th><th>Satuan</th><th>Total</th><th></th></tr></thead>
+      <tbody id="masukList"></tbody>
+    </table>
+  </div>
+
+  <div id="pengeluaran" class="tab" style="display:none">
+    <form id="formKeluar">
+      <h3>Tambah Pengeluaran (Pembelian Barang)</h3>
+      <div class="row">
+        <div><label>Nama Barang</label><input type="text" id="kNama" required></div>
+        <div><label>Tanggal</label><input type="date" id="kTanggal" required></div>
+      </div>
+      <div class="row">
+        <div><label>Jumlah</label><input type="number" id="kJumlah" min="1" value="1" required></div>
+        <div><label>Harga Satuan (Rp)</label><input type="number" id="kHarga" min="0" required></div>
+      </div>
+      <div class="total-preview">Total: <b id="kTotalPreview">Rp0</b></div><br>
+      <button type="submit" class="submit">Simpan Pengeluaran</button>
+    </form>
+    <table>
+      <thead><tr><th>Tanggal</th><th>Barang</th><th>Jml</th><th>Satuan</th><th>Total</th><th></th></tr></thead>
+      <tbody id="keluarList"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+let data = { masuk: [], keluar: [] };
+const rupiah = n => 'Rp' + Number(n||0).toLocaleString('id-ID');
+const todayStr = () => new Date().toISOString().slice(0,10);
+document.getElementById('mTanggal').value = todayStr();
+document.getElementById('kTanggal').value = todayStr();
+
+async function load(){
+  try{
+    const res = await window.storage.get('toko-data');
+    if(res && res.value) data = JSON.parse(res.value);
+  }catch(e){ /* belum ada data tersimpan */ }
+  render();
+}
+async function save(){
+  try{ await window.storage.set('toko-data', JSON.stringify(data)); }
+  catch(e){ console.error('Gagal menyimpan', e); }
+}
+
+function render(){
+  const totalMasuk = data.masuk.reduce((s,i)=>s+i.total,0);
+  const totalKeluar = data.keluar.reduce((s,i)=>s+i.total,0);
+  document.getElementById('totalMasuk').textContent = rupiah(totalMasuk);
+  document.getElementById('totalKeluar').textContent = rupiah(totalKeluar);
+  const saldoEl = document.getElementById('saldo');
+  saldoEl.textContent = rupiah(totalMasuk-totalKeluar);
+  saldoEl.className = 'value ' + (totalMasuk-totalKeluar >= 0 ? 'green':'red');
+
+  const all = [...data.masuk.map(i=>({...i,jenis:'Pemasukan'})), ...data.keluar.map(i=>({...i,jenis:'Pengeluaran'}))]
+    .sort((a,b)=> b.tanggal.localeCompare(a.tanggal) || b.id-a.id).slice(0,8);
+  const recent = document.getElementById('recentList');
+  recent.innerHTML = all.length ? all.map(i=>`
+    <tr><td>${i.tanggal}</td><td class="${i.jenis==='Pemasukan'?'green':'red'}">${i.jenis}</td><td>${i.nama}</td><td>${rupiah(i.total)}</td></tr>
+  `).join('') : `<tr><td colspan="4" class="empty">Belum ada transaksi</td></tr>`;
+
+  fillTable('masukList', data.masuk, 'masuk');
+  fillTable('keluarList', data.keluar, 'keluar');
+}
+
+function fillTable(elId, arr, type){
+  const el = document.getElementById(elId);
+  const sorted = [...arr].sort((a,b)=> b.tanggal.localeCompare(a.tanggal) || b.id-a.id);
+  el.innerHTML = sorted.length ? sorted.map(i=>`
+    <tr>
+      <td>${i.tanggal}</td><td>${i.nama}</td><td>${i.jumlah}</td><td>${rupiah(i.harga)}</td><td>${rupiah(i.total)}</td>
+      <td><button class="del" data-type="${type}" data-id="${i.id}">Hapus</button></td>
+    </tr>`).join('') : `<tr><td colspan="6" class="empty">Belum ada data</td></tr>`;
+}
+
+// tab switching
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
+    document.getElementById(btn.dataset.tab).style.display='block';
+  });
+});
+
+// live total preview
+function bindPreview(prefix){
+  const j = document.getElementById(prefix+'Jumlah');
+  const h = document.getElementById(prefix+'Harga');
+  const p = document.getElementById(prefix+'TotalPreview');
+  const upd = ()=> p.textContent = rupiah((Number(j.value)||0)*(Number(h.value)||0));
+  j.addEventListener('input', upd); h.addEventListener('input', upd);
+}
+bindPreview('m'); bindPreview('k');
+
+document.getElementById('formMasuk').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nama = document.getElementById('mNama').value.trim();
+  const tanggal = document.getElementById('mTanggal').value;
+  const jumlah = Number(document.getElementById('mJumlah').value);
+  const harga = Number(document.getElementById('mHarga').value);
+  data.masuk.push({ id: Date.now(), nama, tanggal, jumlah, harga, total: jumlah*harga });
+  await save(); render(); e.target.reset();
+  document.getElementById('mTanggal').value = todayStr();
+  document.getElementById('mJumlah').value = 1;
+  document.getElementById('mTotalPreview').textContent = 'Rp0';
+});
+
+document.getElementById('formKeluar').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nama = document.getElementById('kNama').value.trim();
+  const tanggal = document.getElementById('kTanggal').value;
+  const jumlah = Number(document.getElementById('kJumlah').value);
+  const harga = Number(document.getElementById('kHarga').value);
+  data.keluar.push({ id: Date.now(), nama, tanggal, jumlah, harga, total: jumlah*harga });
+  await save(); render(); e.target.reset();
+  document.getElementById('kTanggal').value = todayStr();
+  document.getElementById('kJumlah').value = 1;
+  document.getElementById('kTotalPreview').textContent = 'Rp0';
+});
+
+document.addEventListener('click', async e=>{
+  if(e.target.classList.contains('del')){
+    const type = e.target.dataset.type;
+    const id = Number(e.target.dataset.id);
+    data[type] = data[type].filter(i=>i.id!==id);
+    await save(); render();
+  }
+});
+
+load();
+</script>
+</body>
+</html>
